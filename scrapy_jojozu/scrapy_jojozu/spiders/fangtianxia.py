@@ -12,12 +12,12 @@ from scrapy import Spider, Selector
 import scrapy
 from urllib.parse import urlparse, unquote_to_bytes
 from fontTools.ttLib import TTFont
-from scrapy_jojozu.items import ScrapyJojozuItem
+from ..items import ScrapyJojozuItem
 
 #https://callback.58.com/antibot/verifycode?serialId=c779e6a2c00fdce7a6cee6f668175e91_fcaef7d7ca234ab283a97bcd5c8b3b2e&code=21&sign=6ac3d1fec452b88acdd2bfdf8e6e67e6&namespace=anjuke_zufang_detail_pc&url=https%3A%2F%2Fsz.zu.anjuke.com%2Ffangyuan%2F1274453653824521%3Fisauction%3D1%26shangquan_id%3D1846
 city_url = {
         '深圳': [
-            "https://sz.zu.fang.com/house/i3%s/"
+            "https://sz.zu.fang.com"
             #    "http://search.fang.com/captcha-039b1eac8d00463825/redirect?h=https://sz.zu.fang.com/house/i3%s/?_rfss=2a&rfss=2-45871c4c2fc9bd3ea9-2a"
                ],
         # "广州": [
@@ -33,7 +33,8 @@ city_url = {
 
 class FangSpider(Spider):
     name = 'fantianxia'
-    allowed_domains = ['sz.zu.fang.com', 'gz.zu.anjuke.com', "sh.zu.anjuke.com", "bj.zu.anjuke.com", "search.fang.com"]
+    allowed_domains = ['sz.zu.fang.com', "search.fang.com"]
+    handle_httpstatus_list = [404, 500]
     lock = threading.Lock()
     start_urls = city_url.get('深圳')
 
@@ -44,23 +45,29 @@ class FangSpider(Spider):
     def start_requests(self):
         for city_main_url in city_url.values():
             for url in city_main_url:
-                for i in range(3):
-                    start_url = url % str(i)
-                    yield scrapy.Request(start_url)
-
+                yield scrapy.Request(url)
 
     def parse(self, response):
-        next_url = re.search(' //location.href="(.*?)"', response.text).group(1)
-        if "chuzu" in next_url:
-            yield scrapy.Request(next_url, callback=self.item_parse)
-        yield scrapy.Request(next_url, callback=self.page_parse)
+        area_list = response.xpath('//dl[@id="rentid_D04_01"]/dd/a[position()>1]/@href').extract()
+        for area in area_list:
+            area_url = response.url + area
+            yield scrapy.Request(area_url, callback=self.parse_area, meta={'main_url': response.url})
 
+    def parse_area(self, response):
+        max_page = response.xpath('//div[@id="rentid_D10_01"]/span/text()').extract_first()
+        if max_page:
+            max_page_num = max_page[1:-1]
+            for i in range(1,int(max_page_num)+1):
+                page_url = response.url + '/i3' + str(i) + '/'
+                yield scrapy.Request(page_url, callback=self.parse_page, meta={'main_url': response.meta.get('main_url')})
 
-    def page_parse(self, response):
+    def parse_page(self, response):
         row_list = response.xpath('//dd[@class="info rel"]')
         for row in row_list:
-            next_url = "https://sz.zu.fang.com" + row.xpath('p[@class="title"]/a/@href').extract_first()
-            yield scrapy.Request(next_url, callback=self.parse)
+            next_url = response.meta.get('main_url') + row.xpath('p[@class="title"]/a/@href').extract_first()
+            yield scrapy.Request(next_url, callback=self.item_parse)
+
+    # def do_captcha(self, ):
 
     def item_parse(self, response):
         item = ScrapyJojozuItem()

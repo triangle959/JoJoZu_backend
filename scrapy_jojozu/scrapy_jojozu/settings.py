@@ -86,7 +86,7 @@ DOWNLOAD_DELAY = 2
 
 
 # Disable cookies (enabled by default)
-# COOKIES_ENABLED = False
+COOKIES_ENABLED = False
 
 # Disable Telnet Console (enabled by default)
 # TELNETCONSOLE_ENABLED = False
@@ -145,10 +145,11 @@ ITEM_PIPELINES = {
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-LOG_LEVEL = "INFO"
+LOG_LEVEL = "DEBUG"
 
 # REDIRECT_ENABLED = False                       # 关掉重定向, 不会重定向到新的地址
 # HTTPERROR_ALLOWED_CODES = [301, 302]            # 返回301, 302时, 按正常返回对待, 可以正常写入cookie
 # 重试状态码
+RETRY_ENABLED = True
 RETRY_TIMES = 3
 RETRY_HTTP_CODECS = [500, 502, 503, 504, 408, 404]

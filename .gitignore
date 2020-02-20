@@ -1,7 +1,8 @@
 .idea
 test
 test*
-anjuke*
+anjuke.ttf
+anjuke.xml
 build
 eggs
 logs

@@ -78,18 +78,27 @@ class RandomUserAgentMiddleware(object):
     def process_request(self, request, spider):
         if spider.name == "fantianxia":
             # request.meta['proxy'] = "http://127.0.0.1:8889"
-            if 'rfss' in request.url:
+            if 'fang' in request.url:
                 request.headers.update(
-                    {'Host': 'sz.zu.fang.com', 'Connection': 'keep-alive', 'Upgrade-Insecure-Requests': '1',
-                     'User-Agent': 'Mozilla/5.0(WindowsNT10.0;Win64;x64)AppleWebKit/537.36(KHTML,likeGecko)Chrome/79.0.3945.88Safari/537.36',
-                     'Sec-Fetch-User': '?1',
-                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-                     'Sec-Fetch-Site': 'none', 'Sec-Fetch-Mode': 'navigate', 'Accept-Encoding': 'gzip,deflate,br',
-                     'Accept-Language': 'zh-CN,zh;q=0.9'})
-                if 'referer' in request.headers.to_unicode_dict().keys():
-                    request.headers.pop('Referer')
-                if 'cookie' in request.headers.to_unicode_dict().keys():
-                    request.headers.pop('Cookie')
+                    {
+                    'Upgrade-Insecure-Requests': '1',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
+                    'cookie': 'global_cookie=6ittclgccgr3onm0399g4qgij40k6spc3l9; ASP.NET_SessionId=cw32qhat5oscfrqclskwvzt3; integratecover=1; g_sourcepage=zf_fy%5Elb_pc; __utma=147393320.367918277.1582080759.1582080759.1582080759.1; __utmc=147393320; __utmz=147393320.1582080759.1.1.utmcsr=search.fang.com|utmccn=(referral)|utmcmd=referral|utmcct=/captcha-b42cbe87428090c725/redirect; keyWord_recenthousebj=%5b%7b%22name%22%3a%22%e6%9c%9d%e9%98%b3%22%2c%22detailName%22%3a%22%22%2c%22url%22%3a%22%2fhouse-a01%2f%22%2c%22sort%22%3a1%7d%5d; Captcha=305548703270583557715066506D477768677A42755A586C38464C6454755150774C4E38343167596B5369724A662F52697564752B58715A44326C324D68686133477854492B4C476944593D; unique_cookie=U_6ittclgccgr3onm0399g4qgij40k6spc3l9*16',
+                    })
+                # request.cookies = {
+                #     'global_cookie': '6ittclgccgr3onm0399g4qgij40k6spc3l9',
+                #     'unique_cookie': 'U_6ittclgccgr3onm0399g4qgij40k6spc3l9*6',
+                #     'ASP.NET_SessionId': 'cw32qhat5oscfrqclskwvzt3',
+                #     'g_sourcepage': 'zf_fy%5Elb_pc',
+                #     '__utma': '147393320.367918277.1582080759.1582080759.1582080759.1',
+                #     '__utmc': '147393320',
+                #     'Captcha': '646A53664E4A373830342B6E3569304F5634516D466C53694170424C35433355473361394B756B392B6B4D53577250524E4576414C484178583758744962336A6A554A425366672B3837493D',
+                #     '__utmb':'147393320.12.10.1582080759'
+                # }
+                 # if '' in request.headers.to_unicode_dict().keys():
+                #     request.headers.pop('Referer')
+                # if 'cookie' in request.headers.to_unicode_dict().keys():
+                #     request.headers.pop('Cookie')
         else:
             ua = random.choice(USER_AGENT_LIST)
             if ua:

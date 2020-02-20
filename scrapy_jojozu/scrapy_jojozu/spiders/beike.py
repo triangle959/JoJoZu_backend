@@ -73,13 +73,13 @@ class BeikeSpider(scrapy.Spider):
                 '//ul[@class="table_row"]//li[3]/text()').extract_first()
             address = item["title"].split(' ')[0].split('·')[-1]
             # city 需根据列表页传meta进来
-            if 'sz' in urlparse(response.url)[1]:
+            if 'SZ' in urlparse(response.url)[2]:
                 item['city'] = '深圳'
-            elif 'gz' in urlparse(response.url)[1]:
+            elif 'GZ' in urlparse(response.url)[2]:
                 item['city'] = '广州'
-            elif 'sh' in urlparse(response.url)[1]:
+            elif 'SH' in urlparse(response.url)[2]:
                 item['city'] = '上海'
-            elif 'bj' in urlparse(response.url)[1]:
+            elif 'BJ' in urlparse(response.url)[2]:
                 item['city'] = '北京'
 
             location = self.a.get_geocoder(address, item['city'])
