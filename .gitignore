@@ -3,6 +3,7 @@ test
 test*
 anjuke.ttf
 anjuke.xml
+anjuke.js
 build
 eggs
 logs

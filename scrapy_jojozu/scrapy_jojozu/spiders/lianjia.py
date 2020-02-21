@@ -9,6 +9,8 @@ from urllib.parse import urlparse
 from scrapy_jojozu.items import ScrapyJojozuItem
 from scrapy_jojozu.util import AreaPosition
 
+from scrapy_jojozu.scrapy_jojozu.util import time_standard
+
 city_url = {
         '深圳': [
             "https://sz.lianjia.com/zufang/pg0rco11"
@@ -99,10 +101,7 @@ class LianjiaSpider(scrapy.Spider):
                 '//ul[@class="content__article__info2"]/li[@class="fl oneline  "]/text()').extract() if i.strip()]
             item['description'] = ''.join(
                 selector.xpath('//div[@class="content__article__info"]/ul[1]//text()').extract()).replace(" ", "").replace(" ","").replace("\n\n","\n")
-            item['update_time'] = selector.xpath('//div[@class="content__subtitle"]').re("\d+-\d+-\d+")[0]
-            timeArray = time.strptime(item['update_time'], '%Y-%m-%d')
-            timestamp = int(time.mktime(timeArray))
-            item['update_timestamp'] = timestamp
+            item['update_time'],item['update_timestamp'] = time_standard(selector.xpath('//div[@class="content__subtitle"]').re("\d+-\d+-\d+")[0])
             item['url'] = response.url
             item['source'] = "链家"
         except Exception as e:

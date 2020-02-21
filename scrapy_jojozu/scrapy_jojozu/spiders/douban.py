@@ -10,6 +10,8 @@ from bs4 import BeautifulSoup
 
 from scrapy_jojozu.items import DoubanItem
 
+from scrapy_jojozu.scrapy_jojozu.util import time_standard
+
 city_url = {
     '深圳': ['https://www.douban.com/group/106955/',  # 深圳租房团
            'https://www.douban.com/group/szsh/',  # 深圳租房
@@ -73,14 +75,11 @@ class DoubanSpider(scrapy.Spider):
         item["image"] = selector.xpath('//div[@class="topic-richtext"]//img/@src').extract()
         item["create_time"] = selector.xpath('//h3/span[2]/text()').extract_first()
         if item["create_time"].split('-')[1] > response.meta.get('update_time').split('-')[0]:
-            item["update_time"] = str(int(item["create_time"].split('-')[0]) + 1) + '-' + response.meta.get(
-                'update_time')
+            item['update_time'], item['update_timestamp'] = time_standard(str(int(item["create_time"].split('-')[0]) + 1) + '-' + response.meta.get(
+                'update_time'))
         else:
-            item["update_time"] = item["create_time"].split('-')[0] + '-' + response.meta.get('update_time')
+            item['update_time'], item['update_timestamp'] = time_standard(item["create_time"].split('-')[0] + '-' + response.meta.get('update_time'))
         item["replay_num"] = response.meta.get('replay_num')
-        timeArray = time.strptime(item['update_time'], '%Y-%m-%d %H:%M')
-        timestamp = int(time.mktime(timeArray))
-        item["update_timestamp"] = timestamp
         for city_name, url_list in city_url.items():
             if response.meta.get('list_url') in url_list:
                 item['city'] = city_name

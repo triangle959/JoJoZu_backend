@@ -3,9 +3,40 @@
 # @Time    : 2019/12/4 11:33
 # @Author  : zjz
 import json
+import time
 
 import requests
 
+
+def time_standard(press_time):
+    try:
+        new_time = press_time.replace('-', ' ').replace('/', ' ').replace('.', ' ').replace(':', ' ').replace(
+            '年', ' ').replace('月', ' ').replace('日', ' ')
+        time_list = [i for i in new_time.split(" ") if i]
+        if len(time_list[1]) == 1:
+            time_list[1] = '0' + time_list[1]
+        if len(time_list[2]) == 1:
+            time_list[2] = '0' + time_list[2]
+        if len(time_list) > 3:
+            if len(time_list[3]) == 1:
+                time_list[3] = '0' + time_list[3]
+            if len(time_list[4]) == 1:
+                time_list[4] = '0' + time_list[4]
+        new_time = "".join(time_list)
+        while len(new_time) < 14:
+            new_time += '0'
+        new_time = '{}-{}-{} {}:{}:{}'.format(new_time[0:4], new_time[4:6], new_time[6:8], new_time[8:10],
+                                              new_time[10:12], new_time[12:14])
+
+        timeArray = time.strptime(new_time, "%Y-%m-%d %H:%M:%S")
+        return new_time, int(time.mktime(timeArray))
+    # except OverflowError:
+    #     raise (press_time + "时间处理错误")
+    # except ValueError:
+    #     raise (press_time + "时间处理错误")
+    except Exception:
+        print(press_time + "时间处理错误")
+        return None, 9999999999
 
 
 class AreaPosition:
@@ -58,9 +89,11 @@ class AreaPosition:
 
 
 if __name__ == '__main__':
-    keyword = "万科蛇口公馆"
-    city = "深圳"
-    a = AreaPosition()
-    location = a.get_geocoder(keyword,city)
-    print(a.get_area(location, city))
-    print(a.get_place(location,city))
+    # keyword = "万科蛇口公馆"
+    # city = "深圳"
+    # a = AreaPosition()
+    # location = a.get_geocoder(keyword,city)
+    # print(a.get_area(location, city))
+    # print(a.get_place(location,city))
+    print(time_standard("2019年12月30日"))
+    print(time_standard("2020-02-19"))
