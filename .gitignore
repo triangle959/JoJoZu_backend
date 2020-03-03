@@ -1,6 +1,7 @@
 .idea
 test
 test*
+config.py
 anjuke.ttf
 anjuke.xml
 anjuke.js
