@@ -13,7 +13,7 @@ from scrapy import Selector
 from scrapy_jojozu.items import ScrapyJojozuItem
 from scrapy_jojozu.util import AreaPosition
 
-from scrapy_jojozu.scrapy_jojozu.util import time_standard
+from scrapy_jojozu.util import time_standard
 
 city_url = {
         '深圳': [

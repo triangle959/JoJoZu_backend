@@ -13,8 +13,8 @@ import scrapy
 from urllib.parse import urlparse, unquote_to_bytes
 from fontTools.ttLib import TTFont
 
-from scrapy_jojozu.scrapy_jojozu.util import time_standard
-from ..items import ScrapyJojozuItem
+from scrapy_jojozu.util import time_standard
+from scrapy_jojozu.items import ScrapyJojozuItem
 
 #https://callback.58.com/antibot/verifycode?serialId=c779e6a2c00fdce7a6cee6f668175e91_fcaef7d7ca234ab283a97bcd5c8b3b2e&code=21&sign=6ac3d1fec452b88acdd2bfdf8e6e67e6&namespace=anjuke_zufang_detail_pc&url=https%3A%2F%2Fsz.zu.anjuke.com%2Ffangyuan%2F1274453653824521%3Fisauction%3D1%26shangquan_id%3D1846
 city_url = {

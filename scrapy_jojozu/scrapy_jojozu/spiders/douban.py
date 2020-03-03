@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 
 from scrapy_jojozu.items import DoubanItem
 
-from scrapy_jojozu.scrapy_jojozu.util import time_standard
+from scrapy_jojozu.util import time_standard
 
 city_url = {
     '深圳': ['https://www.douban.com/group/106955/',  # 深圳租房团
