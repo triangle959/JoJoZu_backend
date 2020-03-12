@@ -3,3 +3,4 @@ requests==2.22.0
 fonttools==3.41.2
 pymongo==3.8.0
 PyMySQL==0.9.3
+Scrapy==1.5.1

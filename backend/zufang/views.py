@@ -14,9 +14,9 @@ class commonView(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         if request.GET.get('city'):
             print(request.GET.get('city'))
-            queryset = Common.objects.filter(source=request.GET.get('city')).order_by('update_timestamp')
+            queryset = Common.objects.filter(city=request.GET.get('city')).order_by('-update_timestamp')
         else:
-            queryset = Common.objects.all().order_by('update_timestamp')
+            queryset = Common.objects.all().order_by('-update_timestamp')
         serializer_class = serializers.commonSerializer
         # 偏移分页，请求参数为?limit=11&offset=5， 移除以下则返回DRF自带页面
         # 创建分页对象
@@ -25,18 +25,25 @@ class commonView(generics.ListCreateAPIView):
         page_list = page.paginate_queryset(queryset, request, view=self)
         # 对分页进行序列化
         ser = serializer_class(instance=page_list, many=True)
+        data_dict = {}
+        data_dict.update({"total_count": Common.objects.count()})
+        data_dict.update({"city_count": {}})
+        for item in Common.objects.aggregate(
+                [{"$group": {"_id": "$city", "dups": {"$addToSet": "$_id"}, "count": {"$sum": 1}}}]):
+            data_dict["city_count"].update({item["_id"]: item["count"]})
         # return page.get_paginated_response(ser.data)
         return JsonResponse({
             'status': 200,
             'msg': 'success',
-            'data': ser.data
+            'data': ser.data,
+            'pageTotal': data_dict["city_count"].get(request.GET.get('city'))
         }, json_dumps_params={'ensure_ascii': False})
 
 
 class doubanView(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
-        queryset = Douban.objects.all().order_by('update_timestamp')
-        serializer_class = serializers.commonSerializer
+        queryset = Douban.objects.all().order_by('-update_timestamp')
+        serializer_class = serializers.doubanSerializer
         # 偏移分页，请求参数为?limit=11&offset=5， 移除以下则返回DRF自带页面
         # 创建分页对象
         page = LimitOffsetPagination()
@@ -44,11 +51,18 @@ class doubanView(generics.ListCreateAPIView):
         page_list = page.paginate_queryset(queryset, request, view=self)
         # 对分页进行序列化
         ser = serializer_class(instance=page_list, many=True)
+        data_dict = {}
+        data_dict.update({"total_count": Common.objects.count()})
+        data_dict.update({"city_count": {}})
+        for item in Common.objects.aggregate(
+                [{"$group": {"_id": "$city", "dups": {"$addToSet": "$_id"}, "count": {"$sum": 1}}}]):
+            data_dict["city_count"].update({item["_id"]: item["count"]})
         # return page.get_paginated_response(ser.data)
         return JsonResponse({
             'status': 200,
             'msg': 'success',
-            'data': ser.data
+            'data': ser.data,
+            'pageTotal': data_dict["city_count"].get(request.GET.get('city'))
         }, json_dumps_params={'ensure_ascii': False})
 
 

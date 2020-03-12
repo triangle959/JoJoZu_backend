@@ -41,7 +41,6 @@ class AnjukeSpider(Spider):
     start_urls = city_url.get('深圳') + city_url.get('广州') + city_url.get('上海') + city_url.get('北京')
 
     def parse(self, response):
-        soup = BeautifulSoup(response.text, 'lxml')
         selector = Selector(response)
         href_list = selector.xpath('//div[@class="zu-info"]/h3/a/@href').extract()
         for href in href_list:
@@ -92,7 +91,7 @@ class AnjukeSpider(Spider):
                              soup.find('div', id="room_pic_wrap", attrs={'class': 'switch_list'}).find_all('img')]
             item['payment_method'] = soup.find('li', attrs={'class': 'full-line'}).find('span',
                                                                                         attrs={'class': 'type'}).text
-            item['cost'] = soup.find('li', attrs={'class': 'full-line'}).find('span', attrs={'class': 'price'}).text
+            item['cost'] = soup.find('li', attrs={'class': 'full-line'}).find('span', attrs={'class': 'price'}).text[:-3]
             # item['cash_pledge'] = soup.find('li', attrs={'class':'full-line'}).find('span',attrs={'class':'price'}).text
             item['cash_pledge'] = item['payment_method']
             try:
