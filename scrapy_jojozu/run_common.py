@@ -34,12 +34,14 @@ from apscheduler.schedulers.twisted import TwistedScheduler
 from scrapy_jojozu.spiders.anjuke import AnjukeSpider
 from scrapy_jojozu.spiders.beike import BeikeSpider
 from scrapy_jojozu.spiders.lianjia import LianjiaSpider
+from scrapy_jojozu.spiders.fangtianxia import FangSpider
 from scrapy_jojozu.spiders.douban import DoubanSpider
 
 process = CrawlerProcess(get_project_settings())
 scheduler = TwistedScheduler()
 scheduler.add_job(process.crawl, 'interval', args=[AnjukeSpider], minutes=30),
 scheduler.add_job(process.crawl, 'interval', args=[BeikeSpider], minutes=30),
+scheduler.add_job(process.crawl, 'interval', args=[FangSpider], minutes=30),
 scheduler.add_job(process.crawl, 'interval', args=[LianjiaSpider], minutes=30),
 scheduler.add_job(process.crawl, "interval", args=[DoubanSpider], minutes=30)
 scheduler.start()
