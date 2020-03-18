@@ -74,6 +74,18 @@ class DoubanSpider(scrapy.Spider):
         item["content"] = selector.xpath('//div[@class="topic-richtext"]').extract_first()
         item["image"] = selector.xpath('//div[@class="topic-richtext"]//img/@src').extract()
         item["create_time"] = selector.xpath('//h3/span[2]/text()').extract_first()
+        item["text"] = selector.xpath('//div[@class="topic-richtext"]').xpath("normalize-space(.)").extract()
+        lease = None
+        if "整租" in item["title"]:
+            lease = "整租"
+        elif "合租" in item["title"]:
+            lease = "合租"
+        if not lease:
+            if "整租" in item["text"]:
+                lease = "整租"
+            elif "合租" in item["text"]:
+                lease = "合租"
+        item["lease"] = lease
         if item["create_time"].split('-')[1] > response.meta.get('update_time').split('-')[0]:
             item['update_time'], item['update_timestamp'] = time_standard(str(int(item["create_time"].split('-')[0]) + 1) + '-' + response.meta.get(
                 'update_time'))

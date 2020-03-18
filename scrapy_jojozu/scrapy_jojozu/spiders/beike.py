@@ -69,8 +69,8 @@ class BeikeSpider(scrapy.Spider):
             item['image'] = response.xpath('//ul[@class="content__article__slide--small content__article__slide_dot"]//img/@src').extract()
             item['payment_method'] = response.xpath(
                 '//ul[@class="table_row"]//li[1]/text()').extract_first()
-            item['cost'] = response.xpath(
-                '//ul[@class="table_row"]//li[2]/text()').extract_first()
+            item['cost'] = int(response.xpath(
+                '//ul[@class="table_row"]//li[2]/text()').extract_first())
             item['cash_pledge'] = response.xpath(
                 '//ul[@class="table_row"]//li[3]/text()').extract_first()
             address = item["title"].split(' ')[0].split('·')[-1]

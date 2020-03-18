@@ -85,7 +85,7 @@ class FangSpider(Spider):
         # 付款方式
         item["payment_method"] = response.xpath('//div[@class="trl-item sty1"]/text()').extract_first().replace('元/月', "").replace('（',"").replace('）',"")
         # 月租金
-        item["cost"] = response.xpath('//div[@class="trl-item sty1"]/i/text()').extract_first()
+        item["cost"] = int(response.xpath('//div[@class="trl-item sty1"]/i/text()').extract_first())
         # 押金
         item["cash_pledge"] = response.xpath('//div[@class="trl-item sty1"]/text()').extract_first().replace('元/月', "").replace('（',"").replace('）',"")
         # 区域

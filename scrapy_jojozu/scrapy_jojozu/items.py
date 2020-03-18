@@ -50,6 +50,10 @@ class ScrapyJojozuItem(scrapy.Item):
 class DoubanItem(scrapy.Item):
     # 标题
     title = scrapy.Field()
+    # 租赁方式
+    lease = scrapy.Field()
+    # 内容文本
+    text = scrapy.Field()
     # 发布者
     author = scrapy.Field()
     # 内容H5

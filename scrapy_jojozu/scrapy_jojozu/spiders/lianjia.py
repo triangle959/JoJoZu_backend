@@ -69,9 +69,9 @@ class LianjiaSpider(scrapy.Spider):
             item['payment_method'] = selector.xpath(
                 '//div[@class="content__article__info3 cost_box"]//div[@class="table_content"]//li[1]/text()').extract_first(
                 default="")
-            item['cost'] = selector.xpath(
+            item['cost'] = int(selector.xpath(
                 '//div[@class="content__article__info3 cost_box"]//div[@class="table_content"]//li[2]/text()').extract_first(
-                default="")
+                default=""))
             item['cash_pledge'] = selector.xpath(
                 '//div[@class="content__article__info3 cost_box"]//div[@class="table_content"]//li[3]/text()').extract_first(
                 default="")

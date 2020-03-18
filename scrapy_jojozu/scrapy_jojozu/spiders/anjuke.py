@@ -91,7 +91,7 @@ class AnjukeSpider(Spider):
                              soup.find('div', id="room_pic_wrap", attrs={'class': 'switch_list'}).find_all('img')]
             item['payment_method'] = soup.find('li', attrs={'class': 'full-line'}).find('span',
                                                                                         attrs={'class': 'type'}).text
-            item['cost'] = soup.find('li', attrs={'class': 'full-line'}).find('span', attrs={'class': 'price'}).text[:-3]
+            item['cost'] = int(soup.find('li', attrs={'class': 'full-line'}).find('span', attrs={'class': 'price'}).text[:-3])
             # item['cash_pledge'] = soup.find('li', attrs={'class':'full-line'}).find('span',attrs={'class':'price'}).text
             item['cash_pledge'] = item['payment_method']
             try:
