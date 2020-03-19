@@ -65,7 +65,8 @@ class LianjiaSpider(scrapy.Spider):
                 item['type'] = response.xpath('//ul[@class="content__aside__list"]/li[2]/text()').extract_first().split(' ')[0]
             except:
                 return
-            item['image'] = selector.xpath('//div[@class="content__thumb--box"]//img/@src').extract()
+            image_list = selector.xpath('//div[@class="content__thumb--box"]//img/@src').extract()
+            item["image"] = [i.replace("https", "http") for i in image_list]
             item['payment_method'] = selector.xpath(
                 '//div[@class="content__article__info3 cost_box"]//div[@class="table_content"]//li[1]/text()').extract_first(
                 default="")

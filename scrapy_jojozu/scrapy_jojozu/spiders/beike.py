@@ -66,7 +66,8 @@ class BeikeSpider(scrapy.Spider):
             item["title"] = response.xpath('//p[@class="content__title"]/text()').extract_first()
             item['lease'] = response.xpath('//ul[@class="content__aside__list"]/li[1]/text()').extract_first(default="")
             item['type'] = response.xpath('//ul[@class="content__aside__list"]/li[2]/text()').extract_first().split(' ')[0]
-            item['image'] = response.xpath('//ul[@class="content__article__slide--small content__article__slide_dot"]//img/@src').extract()
+            image_list = response.xpath('//ul[@class="content__article__slide--small content__article__slide_dot"]//img/@src').extract()
+            item["image"] = [i.replace("https", "http") for i in image_list]
             item['payment_method'] = response.xpath(
                 '//ul[@class="table_row"]//li[1]/text()').extract_first()
             item['cost'] = int(response.xpath(
