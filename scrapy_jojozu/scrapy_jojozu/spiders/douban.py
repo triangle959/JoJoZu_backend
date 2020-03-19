@@ -74,7 +74,7 @@ class DoubanSpider(scrapy.Spider):
         item["content"] = selector.xpath('//div[@class="topic-richtext"]').extract_first()
         item["image"] = selector.xpath('//div[@class="topic-richtext"]//img/@src').extract()
         item["create_time"] = selector.xpath('//h3/span[2]/text()').extract_first()
-        item["text"] = selector.xpath('//div[@class="topic-richtext"]').xpath("normalize-space(.)").extract()
+        item["text"] = selector.xpath('//div[@class="topic-richtext"]').xpath("normalize-space(.)").extract_first()
         lease = None
         if "整租" in item["title"]:
             lease = "整租"
