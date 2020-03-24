@@ -39,7 +39,11 @@ class Douban(Document):
     # 发布者
     author = StringField(max_length=10)
     # 内容H5
-    content = StringField(max_length=10)
+    content = StringField(max_length=5000)
+    # 内容正文
+    text = StringField(max_length=5000)
+    # 租房类型
+    lease = StringField(max_length=10)
     # 图片 ArrayList
     image = ListField(max_length=20)
     # 回应数

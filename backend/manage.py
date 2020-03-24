@@ -14,5 +14,13 @@ def main():
         ) from exc
     execute_from_command_line(sys.argv)
 
+def job():
+    pass
+
 if __name__ == '__main__':
+    from apscheduler.schedulers.background import BackgroundScheduler
+
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(job, 'interval', minutes=1)
+    scheduler.start()
     main()
