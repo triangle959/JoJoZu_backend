@@ -5,6 +5,7 @@ config.py
 anjuke.ttf
 anjuke.xml
 anjuke.js
+uwsgi.*
 build
 eggs
 logs
