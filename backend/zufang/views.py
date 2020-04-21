@@ -11,13 +11,16 @@ from . import models
 from . import serializers
 from rest_framework_mongoengine import generics
 from rest_framework.pagination import CursorPagination, LimitOffsetPagination
+from mongoengine import Q
 
 
 class commonView(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         if request.GET.get('city'):
             print(request.GET.get('city'))
-            queryset = Common.objects.filter(city=request.GET.get('city')).order_by('-update_timestamp')
+            queryset = Common.objects.filter(city=request.GET.get('city')).filter(
+                type__contains=request.GET.get('type')).filter(cost__gte=request.GET.get('min')).filter(
+                cost__lte=request.GET.get('max')).order_by('-update_timestamp')
         else:
             queryset = Common.objects.all().order_by('-update_timestamp')
         serializer_class = serializers.commonSerializer
@@ -46,7 +49,8 @@ class commonView(generics.ListCreateAPIView):
 class doubanView(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         if request.GET.get('city') and request.GET.get('lease'):
-            queryset = Douban.objects.filter(city=request.GET.get('city')).filter(lease=request.GET.get('lease')).order_by('-update_timestamp')
+            queryset = Douban.objects.filter(city=request.GET.get('city')).filter(
+                lease=request.GET.get('lease')).order_by('-update_timestamp')
         elif request.GET.get('lease'):
             queryset = Douban.objects.filter(lease=request.GET.get('lease')).order_by('-update_timestamp')
         elif request.GET.get('city'):
@@ -72,7 +76,7 @@ class doubanView(generics.ListCreateAPIView):
                     "lease": "$lease"
                 }, "dups": {"$addToSet": "$_id"}, "count": {"$sum": 1}}}]):
             if request.GET.get('lease') and item['_id']["lease"] == request.GET.get('lease'):
-                page_total += item ["count"]
+                page_total += item["count"]
             if request.GET.get('city') and item['_id']["city"] == request.GET.get('city'):
                 page_total += item["count"]
             if not request.GET.get('lease') and not request.GET.get('city'):
@@ -179,7 +183,8 @@ def controlView(request):
             deal_result2.update({"all_num": [{"source": k["_id"], "sum": k["count"]}]})
         else:
             deal_result2["all_num"].append({"source": k["_id"], "sum": k["count"]})
-    result4 = list(Douban.objects.aggregate([{"$match":{"update_timestamp": {"$gt": end_time}}},{"$group": {"_id": "Total","count": {"$sum": 1}}}]))
+    result4 = list(Douban.objects.aggregate(
+        [{"$match": {"update_timestamp": {"$gt": end_time}}}, {"$group": {"_id": "Total", "count": {"$sum": 1}}}]))
     deal_result2["today_num"].append({"source": "豆瓣小组", "sum": result4[0]["count"] if result4 else 0})
     deal_result2["all_num"].append({"source": "豆瓣小组", "sum": Douban.objects.count()})
     return JsonResponse({
@@ -197,34 +202,41 @@ def controlView(request):
     }, json_dumps_params={'ensure_ascii': False})
 
 
-"""
-规划：
-上方---7天内的各个城市的平均房价（左），性价比排行榜列表（右）
-下方---7天内的各个城市的房源个数（左），各渠道总数量，今日数量统计（右）
-{
-      name: '最低价',
-      type: 'line',
-      data: [1, -2, 2, 5, 3, 2, 0],
-      data2: [数量]
-      smooth: true,
-      markPoint: {
-        data: [
-          { name: '周最低', value: -2, xAxis: 1, yAxis: -1.5 }
-        ]
-      },
-      markLine: {
-        data: [
-          { type: 'average', name: '平均值' }
-        ]
-}
-db.common.aggregate([
-                    {"$match": {
-                        "update_timestamp": {"$gt": 1584547199}
-                    }},
-                    {"$group": {
-                        "_id": "$source",
-                        "count": {"$sum": 1},
-                    }}
-                    
-                ])
-"""
+class searchForView(generics.ListCreateAPIView):
+    """
+    平台搜索接口，搜索词可以是title，或者是内容
+    :param request:
+    :return:
+    """
+    def post(self, request, *args, **kwargs):
+        collection = request.POST.get('object')
+        keyword = request.POST.get('keyword')
+        status_code = 200
+        message = "ok"
+
+        if collection == "common":
+            data = Common.objects(Q(description__contains=keyword) | Q(title__contains=keyword)).order_by(
+                '-update_timestamp')
+            serializer_class = serializers.commonSerializer
+        elif collection == "douban":
+            data = Douban.objects(Q(text__contains=keyword) | Q(title__contains=keyword)).order_by('-update_timestamp')
+            serializer_class = serializers.doubanSerializer
+        else:
+            status_code = 400
+            message = 'no this collection!'
+
+        if data:
+            page = LimitOffsetPagination()
+            # 在数据库中获取分页的数据
+            page_list = page.paginate_queryset(data, request, view=self)
+            # 对分页进行序列化
+            ser = serializer_class(instance=page_list, many=True)
+            return JsonResponse(
+                {"status_code": status_code,
+                 "message": message,
+                 "data": ser.data,
+                 "pageTotal": len(data)
+                 })
+        else:
+            return JsonResponse(
+                {"status_code": status_code, "message": message, "data": ""})

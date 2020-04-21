@@ -6,9 +6,21 @@
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 import json
 import random
+import re
+import time
+import traceback
+from selenium import webdriver
+from PIL import Image
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 import requests
-from scrapy import signals
+from scrapy import signals, Request, FormRequest
+from scrapy.http import HtmlResponse, Response
+from scrapy.downloadermiddlewares.retry import RetryMiddleware
 
 from scrapy_jojozu.settings import PROXIES, USER_AGENT_LIST
 
@@ -16,10 +28,12 @@ from scrapy_jojozu.settings import PROXIES, USER_AGENT_LIST
 代理中间件，scrapy底层使用urllib的请求，所以要补齐协议，尽量请求主站域名
 """
 
+
 def get_proxy():
     res = requests.get("http://127.0.0.1:3289/pop")
     result = json.loads(res.text)
     return result
+
 
 class ProxyMiddleware(object):
     def process_request(self, request, spider):
@@ -45,16 +59,16 @@ class ProxyMiddleware(object):
             else:
                 main_url = "https://www.baidu.com"
             res = requests.get(main_url,
-                                   proxies={"http": "http://" + proxy, "https": "https://" + proxy},
-                                   # proxies=proxy,
-                                   headers=headers,
-                                   timeout=5)
+                               proxies={"http": "http://" + proxy, "https": "https://" + proxy},
+                               # proxies=proxy,
+                               headers=headers,
+                               timeout=5)
             if res.status_code == 200:
                 request.meta['proxy'] = "http://" + proxy
                 # request.meta['proxy'] = proxy.get('http') or proxy.get('https')
                 return
             else:
-                print("代理"+proxy+"被网站封了")
+                print("代理" + proxy + "被网站封了")
                 # print("代理" + (proxy.get('http') or proxy.get('https')) + "被网站封了")
                 self.process_request(request, spider)
         except (requests.exceptions.ProxyError, requests.exceptions.ReadTimeout):
@@ -76,34 +90,127 @@ settings中要注释原本的UA中间件
 
 class RandomUserAgentMiddleware(object):
     def process_request(self, request, spider):
-        if spider.name == "fantianxia":
-            # request.meta['proxy'] = "http://127.0.0.1:8889"
-            if 'fang' in request.url:
-                request.headers.update(
-                    {
-                    'Upgrade-Insecure-Requests': '1',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
-                    'cookie': 'global_cookie=6ittclgccgr3onm0399g4qgij40k6spc3l9; ASP.NET_SessionId=cw32qhat5oscfrqclskwvzt3; integratecover=1; g_sourcepage=zf_fy%5Elb_pc; __utma=147393320.367918277.1582080759.1582080759.1582080759.1; __utmc=147393320; __utmz=147393320.1582080759.1.1.utmcsr=search.fang.com|utmccn=(referral)|utmcmd=referral|utmcct=/captcha-b42cbe87428090c725/redirect; keyWord_recenthousebj=%5b%7b%22name%22%3a%22%e6%9c%9d%e9%98%b3%22%2c%22detailName%22%3a%22%22%2c%22url%22%3a%22%2fhouse-a01%2f%22%2c%22sort%22%3a1%7d%5d; Captcha=305548703270583557715066506D477768677A42755A586C38464C6454755150774C4E38343167596B5369724A662F52697564752B58715A44326C324D68686133477854492B4C476944593D; unique_cookie=U_6ittclgccgr3onm0399g4qgij40k6spc3l9*16',
-                    })
-                # request.cookies = {
-                #     'global_cookie': '6ittclgccgr3onm0399g4qgij40k6spc3l9',
-                #     'unique_cookie': 'U_6ittclgccgr3onm0399g4qgij40k6spc3l9*6',
-                #     'ASP.NET_SessionId': 'cw32qhat5oscfrqclskwvzt3',
-                #     'g_sourcepage': 'zf_fy%5Elb_pc',
-                #     '__utma': '147393320.367918277.1582080759.1582080759.1582080759.1',
-                #     '__utmc': '147393320',
-                #     'Captcha': '646A53664E4A373830342B6E3569304F5634516D466C53694170424C35433355473361394B756B392B6B4D53577250524E4576414C484178583758744962336A6A554A425366672B3837493D',
-                #     '__utmb':'147393320.12.10.1582080759'
-                # }
-                 # if '' in request.headers.to_unicode_dict().keys():
-                #     request.headers.pop('Referer')
-                # if 'cookie' in request.headers.to_unicode_dict().keys():
-                #     request.headers.pop('Cookie')
-        else:
-            ua = random.choice(USER_AGENT_LIST)
-            if ua:
-                request.headers.setdefault('User-Agent', ua)
+        ua = random.choice(USER_AGENT_LIST)
+        if ua:
+            request.headers.setdefault('User-Agent', ua)
 
+
+class FangDownloaderMiddleware(object):
+    headers = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Safari/605.1.15",
+    }
+
+    # 处理response
+    def process_response(self, request, response, spider):
+        try:
+            # 如果返回的url中包含“captcha”，则运行此程序
+            if ('captcha' in response.url):
+                # 记录原始的回调函数
+                callback = request.callback
+                # 用requests发起一次请求，获取cookies内的captcha_uid
+                r = requests.get(response.url, headers=self.headers)
+                self.cookies = requests.utils.dict_from_cookiejar(r.cookies)
+                # 用requests下载验证码图片
+                captcha_img_url = response.url.split('?t')[0] + 'captcha-image'
+                captcha_data = self.get_captcha_data(captcha_img_url, captcha_img_url.split('-')[1].split('/')[0])
+                # 获取token值，仅需加上referer
+                cdnversion = re.search('cdnversion=(.*?)"', response.text).group(1)
+                token = self.get_token(response.url, cdnversion)
+                captcha_data.update({'token': str(token)})
+                # 用scrapy的FormRequest构建request对象
+                request = FormRequest(response.url, formdata=captcha_data, callback=callback, dont_filter=True)
+                # 将cookies添加到request对象
+                request.cookies = self.cookies
+                requests.headers = {b'Host': b'search.fang.com'}
+                # 返回request
+                return request
+            # 如果返回的url中不包含“captcha”，则直接返回response
+            else:
+                print("ok" * 20)
+                return response
+        except:
+            traceback.print_exc()
+            return response
+
+    # 获取token
+    def get_token(self, url, cdnversion):
+        # captcha
+        headers = {
+            "Referer": url
+        }
+        captcha_url = url.split('?t')[0] + 'captcha.js?cdnversion=' + cdnversion
+        r = requests.get(captcha_url, headers=headers)
+        t2 = re.search("var t2 = (.*?);", r.text).group(1)
+        return eval(t2)
+
+    # 用requests下载验证码图片
+    def get_captcha_data(self, url, name):
+        r = requests.get(url, headers=self.headers, cookies=self.cookies)
+        # 保存验证码图片
+        image_name = str(int(time.time() * 1000))
+        image_path = './captcha_image/' + image_name + '.png'
+        with open(image_path, 'wb') as file:
+            file.write(r.content)
+
+        r = requests.post('http://127.0.0.1:7788', data=open(image_path, 'rb'))
+        code = json.loads(r.text)['code']
+        # 构建formdata，其中token不知道是个什么值，我就用随机数代替了
+        captcha_data = {
+            'code': code,
+            'submit': '提交',
+        }
+        # 返回formdata
+        return captcha_data
+
+
+
+class ChromeDownloaderMiddleware(object):
+    def __init__(self):
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')  # 设置无界面
+        self.driver = webdriver.Chrome(executable_path='D://chromedriver_76.exe', options=options)
+        self.driver.implicitly_wait(5)
+
+    def process_response(self, request, response, spider):
+        if "captcha" in request.url and ("访问验证" in response.text or "跳转" in response.text):
+            self.driver.get(request.url)  # 获取网页链接内容
+            while True:
+                try:
+                    self.driver.save_screenshot('bdbutton.png')
+                    element = self.driver.find_element_by_xpath('//div[@class="image"]/img')  # 找到验证码图片
+                    print(element.location)  # 打印元素坐标
+                    print(element.size)  # 打印元素大小
+                    left = element.location['x']
+                    top = element.location['y']
+                    right = element.location['x'] + element.size['width']
+                    bottom = element.location['y'] + element.size['height']
+                    im = Image.open('bdbutton.png')
+                    im = im.crop((left, top, right, bottom))
+                    image_name = str(int(time.time() * 1000))
+                    image_path = './captcha_image/' + image_name + '.png'
+                    im.save(image_path)
+                    r = requests.post('http://127.0.0.1:7788', data=open(image_path, 'rb'))
+                    code = json.loads(r.text)['code']
+                    code_input = self.driver.find_element_by_id("code")
+                    code_input.send_keys(code)
+                    self.driver.find_element_by_xpath('//div[@class="button"]/input').click()
+                    if '访问验证' not in self.driver.title:
+                        break
+                except NoSuchElementException:
+                    break
+                except TimeoutException:
+                    continue
+                except Exception:
+                    traceback.print_exc()
+                    continue
+            response = HtmlResponse(url=request.url, body=self.driver.page_source, request=request,
+                                    encoding='utf-8', status=200)  # 返回HTML数据
+            return response
+        else:
+            return response
+
+    def __del__(self):
+        self.driver.close()
 
 
 class ScrapyJojozuSpiderMiddleware(object):

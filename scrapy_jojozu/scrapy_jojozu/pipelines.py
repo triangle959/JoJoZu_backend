@@ -10,17 +10,10 @@ import pymongo
 import pymysql
 
 from scrapy_jojozu.items import ScrapyJojozuItem
-
+from scrapy_jojozu.dbconfig import dbparams, mongo_url
 
 class MysqlPipeline(object):
     def __init__(self):
-        dbparams = {
-            'host': '121.9.245.186',
-            'port': 13306,
-            'user': 'byb',
-            'password': 'Byb@1234',
-            'database': 'jojozu',
-        }
         self.conn = pymysql.connect(**dbparams)
         self.cursor = self.conn.cursor()
 
@@ -46,13 +39,6 @@ class MysqlPipeline(object):
         try:
             self.conn.ping()
         except:
-            dbparams = {
-                'host': '121.9.245.186',
-                'port': 13306,
-                'user': 'byb',
-                'password': 'Byb@1234',
-                'database': 'jojozu',
-            }
             self.conn = pymysql.connect(**dbparams)
 
     def close_spider(self, spider):
@@ -62,8 +48,7 @@ class MysqlPipeline(object):
 
 class MongoPipeline(object):
     def __init__(self):
-        # self.conn = pymongo.MongoClient("mongodb://triangle:123456@192.168.10.120:27017/admin?readPreference=primary")
-        self.conn = pymongo.MongoClient("mongodb://zjz:triangle%40123@111.229.148.168:27018/admin?readPreference=primary")
+        self.conn = pymongo.MongoClient(mongo_url)
         self.db = self.conn['JoJoZu']
 
     def process_item(self, item, spider):

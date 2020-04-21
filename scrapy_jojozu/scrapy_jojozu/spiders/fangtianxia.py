@@ -29,19 +29,24 @@ city_url = {
             "https://sh.zu.fang.com"
         ],
         "北京": [
-            "https://bj.zu.fang.com"
+            "https://zu.fang.com"
         ]
 }
 
 class FangSpider(Spider):
     name = 'fantianxia'
-    allowed_domains = ['sz.zu.fang.com', "search.fang.com"]
-    handle_httpstatus_list = [404, 500]
+    allowed_domains = ['sz.zu.fang.com', 'gz.zu.fang.com', 'sh.zu.fang.com', 'zu.fang.com', "search.fang.com"]
     lock = threading.Lock()
     start_urls = city_url.get('深圳')
 
     custom_settings = {
         'DOWNLOAD_DELAY': 0.2,
+        "HTTPERROR_ALLOWED_CODES": [404],
+        "RETRY_TIMES": 3,
+        "RETRY_HTTP_CODECS": [500, 502, 503, 504, 408, 404],
+        "DOWNLOADER_MIDDLEWARES": {
+            'scrapy_jojozu.middlewares.ChromeDownloaderMiddleware': 543,
+        }
     }
 
     def start_requests(self):
@@ -67,13 +72,12 @@ class FangSpider(Spider):
         row_list = response.xpath('//dd[@class="info rel"]')
         for row in row_list:
             next_url = response.meta.get('main_url') + row.xpath('p[@class="title"]/a/@href').extract_first()
-            yield scrapy.Request(next_url, callback=self.item_parse)
+            yield scrapy.Request(next_url, callback=self.item_parse, dont_filter=True)
 
     # def do_captcha(self, ):
 
     def item_parse(self, response):
-        if response.status == 404:
-            return
+        print("inter item_parse")
         item = ScrapyJojozuItem()
         item["title"] = response.xpath('//div[@class="title"]/text()').extract_first().replace(" ", "").replace(" ","").replace("\n","").replace("\r", "")
         # 租赁方式
@@ -97,7 +101,8 @@ class FangSpider(Spider):
         # 中介费
         item["agent_cost"] = "中介费未知"
         # 最近地铁站
-        item["location"] = response.xpath('//div[@class="rcont"]/a/text()').re('线(.*?)站')[0]
+        location = response.xpath('//div[@class="rcont"]/a/text()')
+        item["location"] =  location.re('线(.*?)站')[0] if location.re('线(.*?)站') else location.extract_first()
         # 设施
         item["support"] = re.search("var peitao = '(.*?)';", response.text).group(1)
         item["description"] = response.xpath('//li[@class="font14 fyld"]/div[@class="fyms_con floatl gray3"]').xpath('string(.)').extract_first()
