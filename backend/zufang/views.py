@@ -142,7 +142,7 @@ def controlView(request):
     city_list = []
     date_set = set()
     for item in sorted(result1, key=lambda r: r["_id"]["day"]):
-        if item["_id"].get("city"):
+        if "city" in item["_id"].keys():
             if item["_id"]["city"] not in city_list:
                 city_list.append(item["_id"]["city"])
                 date_set.add(item["_id"]["day"])
