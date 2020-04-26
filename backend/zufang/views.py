@@ -142,22 +142,23 @@ def controlView(request):
     city_list = []
     date_set = set()
     for item in sorted(result1, key=lambda r: r["_id"]["day"]):
-        if item["_id"]["city"] not in city_list:
-            city_list.append(item["_id"]["city"])
-            date_set.add(item["_id"]["day"])
-            deal_result1.append({
-                "name": item["_id"]["city"],
-                "avg_data": [int(item["avg"])],
-                "count_data": [int(item["count"])],
-                "max_data": [int(item["max"])],
-                "min_data": [int(item["min"])],
-            })
-        else:
-            deal_result1[city_list.index(item["_id"]["city"])]["avg_data"].append(int(item["avg"]))
-            deal_result1[city_list.index(item["_id"]["city"])]["count_data"].append(int(item["count"]))
-            deal_result1[city_list.index(item["_id"]["city"])]["max_data"].append(int(item["max"]))
-            deal_result1[city_list.index(item["_id"]["city"])]["min_data"].append(int(item["min"]))
-            date_set.add(item["_id"]["day"])
+        if item["_id"].get("city"):
+            if item["_id"]["city"] not in city_list:
+                city_list.append(item["_id"]["city"])
+                date_set.add(item["_id"]["day"])
+                deal_result1.append({
+                    "name": item["_id"]["city"],
+                    "avg_data": [int(item["avg"])],
+                    "count_data": [int(item["count"])],
+                    "max_data": [int(item["max"])],
+                    "min_data": [int(item["min"])],
+                })
+            else:
+                deal_result1[city_list.index(item["_id"]["city"])]["avg_data"].append(int(item["avg"]))
+                deal_result1[city_list.index(item["_id"]["city"])]["count_data"].append(int(item["count"]))
+                deal_result1[city_list.index(item["_id"]["city"])]["max_data"].append(int(item["max"]))
+                deal_result1[city_list.index(item["_id"]["city"])]["min_data"].append(int(item["min"]))
+                date_set.add(item["_id"]["day"])
     date_set = list(sorted(date_set))
     # 拼接各个渠道数量统计
     result2 = list(Common.objects.aggregate([
