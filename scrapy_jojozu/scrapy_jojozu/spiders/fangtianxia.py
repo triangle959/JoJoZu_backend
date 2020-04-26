@@ -112,12 +112,12 @@ class FangSpider(Spider):
         item["url"] = response.url
         # 来源渠道
         item["source"] = "房天下"
-        if 'sz' in urlparse(response.url)[1]:
+        if "sz.zu" in response.url:
             item['city'] = '深圳'
-        elif 'gz' in urlparse(response.url)[1]:
+        elif "gz.zu" in response.url:
             item['city'] = '广州'
-        elif 'sh' in urlparse(response.url)[1]:
+        elif "sh.zu" in response.url:
             item['city'] = '上海'
-        elif 'bj' in urlparse(response.url)[1]:
+        elif "bj.zu" in response.url:
             item['city'] = '北京'
         yield item
