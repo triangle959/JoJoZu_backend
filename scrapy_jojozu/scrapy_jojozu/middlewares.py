@@ -166,18 +166,19 @@ class FangDownloaderMiddleware(object):
 
 class ChromeDownloaderMiddleware(object):
     def __init__(self):
-        options = webdriver.ChromeOptions()
-        options.add_argument('--headless')  # 设置无界面
-        self.driver = webdriver.Chrome(executable_path='D://chromedriver_76.exe', options=options)
-        self.driver.implicitly_wait(5)
+        pass
 
     def process_response(self, request, response, spider):
         if "captcha" in request.url and ("访问验证" in response.text or "跳转" in response.text):
-            self.driver.get(request.url)  # 获取网页链接内容
+            options = webdriver.ChromeOptions()
+            options.add_argument('--headless')  # 设置无界面
+            driver = webdriver.Chrome(executable_path='D://chromedriver_76.exe', options=options)
+            driver.implicitly_wait(5)
+            driver.get(request.url)  # 获取网页链接内容
             while True:
                 try:
-                    self.driver.save_screenshot('bdbutton.png')
-                    element = self.driver.find_element_by_xpath('//div[@class="image"]/img')  # 找到验证码图片
+                    driver.save_screenshot('bdbutton.png')
+                    element = driver.find_element_by_xpath('//div[@class="image"]/img')  # 找到验证码图片
                     print(element.location)  # 打印元素坐标
                     print(element.size)  # 打印元素大小
                     left = element.location['x']
@@ -189,28 +190,31 @@ class ChromeDownloaderMiddleware(object):
                     image_name = str(int(time.time() * 1000))
                     image_path = './captcha_image/' + image_name + '.png'
                     im.save(image_path)
+                    # 请求验证码识别接口
                     r = requests.post('http://127.0.0.1:7788', data=open(image_path, 'rb'))
                     code = json.loads(r.text)['code']
-                    code_input = self.driver.find_element_by_id("code")
+                    code_input = driver.find_element_by_id("code")
                     code_input.send_keys(code)
-                    self.driver.find_element_by_xpath('//div[@class="button"]/input').click()
-                    if '访问验证' not in self.driver.title:
+                    driver.find_element_by_xpath('//div[@class="button"]/input').click()
+                    if '访问验证' not in driver.title:
                         break
                 except NoSuchElementException:
                     break
                 except TimeoutException:
                     continue
+                except NoSuchWindowException:
+                    break
                 except Exception:
                     traceback.print_exc()
                     continue
-            response = HtmlResponse(url=request.url, body=self.driver.page_source, request=request,
+
+            response = HtmlResponse(url=request.url, body=driver.page_source, request=request,
                                     encoding='utf-8', status=200)  # 返回HTML数据
+            driver.close()
             return response
         else:
             return response
 
-    def __del__(self):
-        self.driver.close()
 
 
 class ScrapyJojozuSpiderMiddleware(object):
